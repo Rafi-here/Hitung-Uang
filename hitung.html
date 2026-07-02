@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Hitung Pecahan Uang · Logistik Helper</title>
+  <!-- Font & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body {
+      background: #F5F7FA;
+      color: #1E293B;
+      padding: 20px 16px 60px;
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+    }
+    body.dark {
+      background: #0F172A;
+      color: #E2E8F0;
+    }
+    body.dark .card { background: #1E293B; color: #E2E8F0; border-color: #334155; }
+    body.dark .card .text-muted { color: #94A3B8; }
+    body.dark input { background: #334155; color: #F1F5F9; border-color: #475569; }
+    body.dark .btn-outline-secondary { border-color: #475569; color: #CBD5E1; }
+    body.dark .table-responsive { background: #1E293B; }
+    body.dark table td, body.dark table th { border-color: #334155; }
+    body.dark .total-card { background: #1E3A8A; }
+
+    .container { max-width: 1300px; margin: 0 auto; }
+    .card {
+      background: #FFFFFF;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.05);
+      padding: 18px 16px;
+      transition: all 0.25s ease;
+      border: 1px solid rgba(0,0,0,0.02);
+    }
+    .card:hover { box-shadow: 0 12px 28px rgba(0,0,0,0.07); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border: none; border-radius: 40px;
+      font-weight: 600; font-size: 0.9rem;
+      transition: all 0.2s ease; cursor: pointer;
+      background: #E9EEF4; color: #1E293B;
+    }
+    .btn-primary { background: #2563EB; color: #fff; }
+    .btn-primary:hover { background: #1D4ED8; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(37,99,235,0.35); }
+    .btn-success { background: #22C55E; color: #fff; }
+    .btn-success:hover { background: #16A34A; transform: translateY(-2px); }
+    .btn-danger { background: #EF4444; color: #fff; }
+    .btn-danger:hover { background: #DC2626; transform: translateY(-2px); }
+    .btn-outline-secondary { background: transparent; border: 1.5px solid #CBD5E1; }
+
+    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left h1 { font-size: 1.6rem; font-weight: 700; }
+    .header-left i { font-size: 2rem; color: #2563EB; }
+    .header-right { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+    /* pecahan grid */
+    .denom-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .denom-item {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .denom-item label {
+      font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+    }
+    .denom-item label i { color: #2563EB; width: 20px; }
+    .denom-item input {
+      width: 100%; padding: 10px 14px; border-radius: 30px;
+      border: 1.5px solid #E2E8F0; background: #F8FAFC;
+      font-size: 0.95rem; transition: 0.2s;
+    }
+    .denom-item input:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .denom-item .subtotal {
+      font-size: 0.85rem; font-weight: 500; color: #2563EB;
+      text-align: right; padding-right: 8px;
+    }
+
+    .total-card {
+      background: #2563EB; color: white; border-radius: 18px;
+      padding: 24px 20px; margin: 16px 0 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap;
+    }
+    .total-card .label { font-size: 1rem; opacity: 0.85; }
+    .total-card .value { font-size: 2.4rem; font-weight: 700; letter-spacing: 1px; }
+
+    .table-responsive { overflow-x: auto; border-radius: 18px; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 300px; }
+    th { text-align: left; padding: 12px 8px; background: #F1F5F9; font-weight: 600; }
+    td { padding: 10px 8px; border-bottom: 1px solid #E2E8F0; }
+
+    .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 8px; }
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }
+    @media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
+
+    .ring-container { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0; }
+    .ring-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; }
+    .ring-item canvas { width: 60px !important; height: 60px !important; }
+
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* responsive */
+    @media (max-width: 480px) {
+      .header-left h1 { font-size: 1.2rem; }
+      .total-card .value { font-size: 1.8rem; }
+      .denom-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .denom-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .denom-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .toast {
+      position: fixed; bottom: 30px; right: 30px; background: #1E293B;
+      color: white; padding: 14px 28px; border-radius: 40px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(30px); transition: all 0.4s ease;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <i class="fas fa-calculator"></i>
+        <h1>Hitung Pecahan Uang</h1>
+      </div>
+      <div class="header-right">
+        <span style="font-size:0.9rem; opacity:0.7;"><i class="far fa-clock"></i> <span id="clockDisplay"></span></span>
+        <button class="btn btn-outline-secondary" id="themeToggle"><i class="fas fa-moon"></i></button>
+        <a href="index.html" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Dashboard</a>
+      </div>
+    </header>
+
+    <p style="margin-bottom:20px; opacity:0.7;"><i class="fas fa-info-circle"></i> Masukkan jumlah lembar/keping setiap pecahan, total akan dihitung otomatis.</p>
+
+    <!-- INPUT PECAHAN -->
+    <div class="denom-grid" id="denomGrid"></div>
+
+    <!-- TOTAL CARD -->
+    <div class="total-card">
+      <div><span class="label"><i class="fas fa-coins"></i> TOTAL UANG</span></div>
+      <div class="value" id="grandTotal">Rp0</div>
+    </div>
+
+    <!-- ACTION BAR -->
+    <div class="action-bar">
+      <button class="btn btn-danger" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset Semua</button>
+      <button class="btn btn-primary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
+      <button class="btn btn-success" id="printBtn"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-warning" id="copyTotalBtn"><i class="fas fa-copy"></i> Copy Total</button>
+      <button class="btn btn-success" id="saveHistoryBtn"><i class="fas fa-save"></i> Simpan Hasil</button>
+    </div>
+
+    <!-- RING PROGRESS & PIE CHART -->
+    <div class="chart-row">
+      <div class="card">
+        <h5 style="margin-bottom:10px;"><i class="fas fa-chart-pie"></i> Komposisi Pecahan</h5>
+        <canvas id="pieChart" style="max-height:200px; width:100%;"></canvas>
+      </div>
+      <div class="card">
+        <h5 style="margin-bottom:10px;"><i class="fas fa-circle-notch"></i> Progress Ring</h5>
+        <div class="ring-container" id="ringContainer"></div>
+      </div>
+    </div>
+
+    <!-- TABEL DETAIL -->
+    <div class="card" style="padding:6px 6px 12px;">
+      <h5 style="padding:0 8px;"><i class="fas fa-table"></i> Detail Perhitungan</h5>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>Pecahan</th><th>Jumlah</th><th>Subtotal</th></tr></thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    (function(){
+      // ===== DATA PECAHAN =====
+      const denominations = [
+        { label: 'Rp100.000', value: 100000, icon: 'fa-money-bill-wave' },
+        { label: 'Rp50.000', value: 50000, icon: 'fa-money-bill-wave' },
+        { label: 'Rp20.000', value: 20000, icon: 'fa-money-bill-wave' },
+        { label: 'Rp10.000', value: 10000, icon: 'fa-money-bill-wave' },
+        { label: 'Rp5.000', value: 5000, icon: 'fa-money-bill' },
+        { label: 'Rp2.000', value: 2000, icon: 'fa-money-bill' },
+        { label: 'Rp1.000', value: 1000, icon: 'fa-money-bill' },
+        { label: 'Rp500', value: 500, icon: 'fa-coins' },
+        { label: 'Rp200', value: 200, icon: 'fa-coins' },
+        { label: 'Rp100', value: 100, icon: 'fa-coins' }
+      ];
+
+      // ===== STATE =====
+      let counts = JSON.parse(localStorage.getItem('pecahanCounts')) || {};
+      // ensure all keys exist
+      denominations.forEach(d => { if (counts[d.value] === undefined) counts[d.value] = 0; });
+
+      // DOM refs
+      const denomGrid = document.getElementById('denomGrid');
+      const detailBody = document.getElementById('detailTableBody');
+      const grandTotalEl = document.getElementById('grandTotal');
+      const toast = document.getElementById('toast');
+      let pieChart = null;
+
+      // ===== FORMAT RUPIAH =====
+      const formatRp = (num) => 'Rp' + Math.round(num).toLocaleString('id-ID');
+
+      // ===== TOAST =====
+      let toastTimer;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+      }
+
+      // ===== RENDER INPUTS =====
+      function renderInputs() {
+        denomGrid.innerHTML = denominations.map(d => {
+          const val = counts[d.value] || 0;
+          return `
+            <div class="denom-item fade-in">
+              <label><i class="fas ${d.icon}"></i> ${d.label}</label>
+              <input type="number" min="0" step="1" value="${val}" 
+                     data-value="${d.value}" placeholder="Jumlah" />
+              <span class="subtotal" id="subtotal-${d.value}">${formatRp(d.value * val)}</span>
+            </div>
+          `;
+        }).join('');
+
+        // attach events
+        document.querySelectorAll('.denom-item input').forEach(inp => {
+          inp.addEventListener('input', function(e) {
+            let val = parseInt(this.value) || 0;
+            if (val < 0) val = 0;
+            this.value = val;
+            const denomVal = parseInt(this.dataset.value);
+            counts[denomVal] = val;
+            localStorage.setItem('pecahanCounts', JSON.stringify(counts));
+            updateAll();
+          });
+        });
+        updateAll();
+      }
+
+      // ===== UPDATE ALL =====
+      function updateAll() {
+        // subtotal per item
+        let total = 0;
+        const detailRows = [];
+        denominations.forEach(d => {
+          const qty = counts[d.value] || 0;
+          const sub = d.value * qty;
+          total += sub;
+          const subEl = document.getElementById(`subtotal-${d.value}`);
+          if (subEl) subEl.textContent = formatRp(sub);
+          detailRows.push({ label: d.label, qty, sub });
+        });
+
+        // grand total
+        grandTotalEl.textContent = formatRp(total);
+
+        // detail table
+        detailBody.innerHTML = detailRows.filter(r => r.qty > 0 || r.sub > 0).map(r => `
+          <tr><td>${r.label}</td><td>${r.qty}</td><td>${formatRp(r.sub)}</td></tr>
+        `).join('') || `<tr><td colspan="3" style="text-align:center; color:#94A3B8;">Belum ada data</td></tr>`;
+
+        // Pie chart
+        updatePieChart(detailRows.filter(r => r.sub > 0));
+
+        // Progress rings
+        updateRings(detailRows, total);
+      }
+
+      // ===== PIE CHART =====
+      function updatePieChart(data) {
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        if (pieChart) pieChart.destroy();
+        if (data.length === 0) {
+          pieChart = new Chart(ctx, {
+            type: 'pie',
+            data: { labels: ['Belum ada data'], datasets: [{ data: [1], backgroundColor: ['#E2E8F0'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+          });
+          return;
+        }
+        pieChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: data.map(d => d.label),
+            datasets: [{ data: data.map(d => d.sub), backgroundColor: ['#2563EB','#22C55E','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16'] }]
+          },
+          options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+        });
+      }
+
+      // ===== PROGRESS RINGS =====
+      function updateRings(data, total) {
+        const container = document.getElementById('ringContainer');
+        if (total === 0) {
+          container.innerHTML = '<span style="opacity:0.5;">Tambahkan pecahan untuk melihat ring</span>';
+          return;
+        }
+        container.innerHTML = data.filter(d => d.sub > 0).map(d => {
+          const pct = (d.sub / total) * 100;
+          return `
+            <div class="ring-item">
+              <canvas width="60" height="60" data-pct="${pct}" data-color="#2563EB"></canvas>
+              <span>${d.label} ${Math.round(pct)}%</span>
+            </div>
+          `;
+        }).join('');
+
+        // draw rings
+        document.querySelectorAll('.ring-item canvas').forEach(canvas => {
+          const pct = parseFloat(canvas.dataset.pct);
+          const color = canvas.dataset.color || '#2563EB';
+          const ctx = canvas.getContext('2d');
+          const cx = 30, cy = 30, r = 26, lw = 6;
+          ctx.clearRect(0,0,60,60);
+          ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
+          ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = lw; ctx.stroke();
+          if (pct > 0) {
+            const end = (pct/100) * 2 * Math.PI - Math.PI/2;
+            ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,end);
+            ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+          }
+        });
+      }
+
+      // ===== RESET =====
+      function resetAll() {
+        if (!confirm('Reset semua jumlah pecahan?')) return;
+        denominations.forEach(d => counts[d.value] = 0);
+        localStorage.setItem('pecahanCounts', JSON.stringify(counts));
+        renderInputs();
+        showToast('Semua direset');
+      }
+
+      // ===== COPY TOTAL =====
+      function copyTotal() {
+        const total = denominations.reduce((sum, d) => sum + (d.value * (counts[d.value] || 0)), 0);
+        const text = `Total Uang\n${formatRp(total)}`;
+        navigator.clipboard.writeText(text).then(() => showToast('Total disalin ke clipboard!')).catch(() => showToast('Gagal menyalin'));
+      }
+
+      // ===== SAVE HISTORY =====
+      function saveHistory() {
+        const total = denominations.reduce((sum, d) => sum + (d.value * (counts[d.value] || 0)), 0);
+        if (total === 0) { showToast('Tidak ada uang untuk disimpan'); return; }
+        const history = JSON.parse(localStorage.getItem('pecahanHistory')) || [];
+        const entry = {
+          date: new Date().toISOString(),
+          total: total,
+          details: denominations.map(d => ({ label: d.label, qty: counts[d.value] || 0, sub: d.value * (counts[d.value] || 0) }))
+        };
+        history.push(entry);
+        localStorage.setItem('pecahanHistory', JSON.stringify(history));
+        showToast('Hasil disimpan ke riwayat!');
+      }
+
+      // ===== EXPORT PDF (simulasi) =====
+      function exportPdf() { showToast('Export PDF (simulasi)'); }
+      function printPage() { window.print(); }
+
+      // ===== THEME =====
+      let dark = localStorage.getItem('logistikDark') === 'true';
+      const themeToggle = document.getElementById('themeToggle');
+      function applyTheme() {
+        document.body.classList.toggle('dark', dark);
+        themeToggle.innerHTML = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        localStorage.setItem('logistikDark', String(dark));
+      }
+      themeToggle.addEventListener('click', function() { dark = !dark; applyTheme(); });
+      applyTheme();
+
+      // ===== CLOCK =====
+      function updateClock() {
+        document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+      }
+      setInterval(updateClock, 1000); updateClock();
+
+      // ===== EVENT BINDINGS =====
+      document.getElementById('resetBtn').addEventListener('click', resetAll);
+      document.getElementById('copyTotalBtn').addEventListener('click', copyTotal);
+      document.getElementById('saveHistoryBtn').addEventListener('click', saveHistory);
+      document.getElementById('exportPdfBtn').addEventListener('click', exportPdf);
+      document.getElementById('printBtn').addEventListener('click', printPage);
+
+      // ===== INIT =====
+      renderInputs();
+
+      // Toast selamat datang
+      setTimeout(() => showToast('📊 Hitung pecahan siap digunakan'), 400);
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes"
+    />
+    <title>Logistik Setoran Helper</title>
+    <!-- Font & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+      /* ===== RESET & BASE ===== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        background: #f5f7fa;
+        color: #1e293b;
+        padding: 16px;
+        transition:
+          background 0.3s,
+          color 0.3s;
+        min-height: 100vh;
+      }
+      body.dark {
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      body.dark .card {
+        background: #1e293b;
+        color: #e2e8f0;
+      }
+      body.dark .card .text-muted {
+        color: #94a3b8;
+      }
+      body.dark input,
+      body.dark textarea,
+      body.dark select {
+        background: #334155;
+        color: #f1f5f9;
+        border-color: #475569;
+      }
+      body.dark table {
+        color: #e2e8f0;
+      }
+      body.dark .table-responsive {
+        background: #1e293b;
+      }
+      body.dark .btn-outline-secondary {
+        border-color: #475569;
+        color: #cbd5e1;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow:
+          0 8px 20px rgba(0, 0, 0, 0.03),
+          0 2px 6px rgba(0, 0, 0, 0.05);
+        padding: 20px 18px;
+        transition: all 0.25s ease;
+        border: 1px solid rgba(0, 0, 0, 0.02);
+      }
+      .card:hover {
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+      }
+
+      .text-primary {
+        color: #2563eb;
+      }
+      .text-success {
+        color: #22c55e;
+      }
+      .text-danger {
+        color: #ef4444;
+      }
+      .text-warning {
+        color: #f59e0b;
+      }
+      .bg-primary {
+        background: #2563eb;
+      }
+      .bg-success {
+        background: #22c55e;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        background: #e9eef4;
+        color: #1e293b;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: #2563eb;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+      }
+      .btn-success {
+        background: #22c55e;
+        color: #fff;
+      }
+      .btn-success:hover {
+        background: #16a34a;
+        transform: translateY(-2px);
+      }
+      .btn-danger {
+        background: #ef4444;
+        color: #fff;
+      }
+      .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+      }
+      .btn-warning {
+        background: #f59e0b;
+        color: #1e293b;
+      }
+      .btn-info {
+        background: #432dc2;
+        color: #fff;
+      }
+      .btn-info:hover {
+        background: #02013f;
+        transform: translateY(-2px);
+      }
+      .btn-outline-secondary {
+        background: transparent;
+        border: 1.5px solid #cbd5e1;
+      }
+
+      /* ===== HEADER ===== */
+      .header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .header-left h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .header-left i {
+        font-size: 2rem;
+        color: #2563eb;
+      }
+      .header-right {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        font-size: 0.95rem;
+      }
+
+      /* ===== CARDS ===== */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .stat-card {
+        padding: 16px 14px;
+      }
+      .stat-card .label {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .stat-card .value {
+        font-size: 1.7rem;
+        font-weight: 700;
+        margin: 4px 0;
+      }
+      .stat-card .icon {
+        font-size: 1.8rem;
+        opacity: 0.3;
+        float: right;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 20px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.6s ease;
+        background: #2563eb;
+      }
+      .progress-fill.green {
+        background: #22c55e;
+      }
+
+      /* ===== FORM ===== */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .form-grid .full {
+        grid-column: 1 / -1;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 30px;
+        border: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 0.95rem;
+        transition: 0.2s;
+      }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+
+      /* ===== TABLE ===== */
+      .table-responsive {
+        overflow-x: auto;
+        background: white;
+        border-radius: 18px;
+        padding: 0 4px 4px 4px;
+        margin-top: 10px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        min-width: 600px;
+      }
+      th {
+        text-align: left;
+        padding: 14px 8px;
+        background: #f1f5f9;
+        color: #334155;
+        font-weight: 600;
+      }
+      td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+      }
+      .actions i {
+        margin: 0 6px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .actions i:hover {
+        transform: scale(1.15);
+      }
+
+      /* ===== FILTER ===== */
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin: 18px 0 12px 0;
+      }
+      .filter-bar > * {
+        flex: 1 1 140px;
+      }
+
+      /* ===== TOAST ===== */
+      .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #1e293b;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 40px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.4s ease;
+        z-index: 999;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ===== BOTTOM NAV (mobile) ===== */
+      .bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 8px 0;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+        justify-content: space-around;
+        border-top: 1px solid #e2e8f0;
+        z-index: 100;
+      }
+      .bottom-nav a {
+        color: #475569;
+        font-size: 1.4rem;
+      }
+      .bottom-nav a.active {
+        color: #2563eb;
+      }
+
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          align-items: start;
+          gap: 8px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .bottom-nav {
+          display: flex;
+        }
+        body {
+          padding-bottom: 80px;
+        }
+        .filter-bar {
+          flex-direction: column;
+        }
+        .filter-bar > * {
+          flex: 1 1 100%;
+        }
+      }
+      @media (max-width: 480px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+        .header-left h1 {
+          font-size: 1.2rem;
+        }
+      }
+      @media (min-width: 1024px) {
+        .dashboard-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      /* ripple & extra */
+      .ripple {
+        position: relative;
+        overflow: hidden;
+      }
+      .float-add {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background: #2563eb;
+        color: white;
+        width: 60px;
+        height: 60px;
+        border-radius: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        z-index: 99;
+        border: none;
+      }
+      .float-add:hover {
+        transform: scale(1.05);
+      }
+      @media (min-width: 769px) {
+        .float-add {
+          display: none;
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.4s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .scroll-top {
+        position: fixed;
+        bottom: 150px;
+        right: 20px;
+        background: #2563eb;
+        color: white;
+        width: 48px;
+        height: 48px;
+        border-radius: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 99;
+        border: none;
+        font-size: 1.2rem;
+        transition: 0.3s;
+      }
+      .scroll-top:hover {
+        transform: translateY(-4px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <i class="fas fa-boxes"></i>
+          <h1>LOGISTIK SETORAN HELPER</h1>
+        </div>
+        <div class="header-right">
+          <span id="dateDisplay"><i class="far fa-calendar-alt"></i> </span>
+          <span id="clockDisplay"><i class="far fa-clock"></i> </span>
+          <button class="btn btn-outline-secondary" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- DASHBOARD CARDS -->
+      <div class="dashboard-grid" id="dashboardGrid">
+        <div class="card stat-card">
+          <i class="fas fa-bullseye icon"></i>
+          <div class="label">Target Hari Ini</div>
+          <div class="value" id="targetDisplay">Rp0</div>
+        </div>
+        <div class="card stat-card">
+          <i class="fas fa-hand-holding-usd icon"></i>
+          <div class="label">Total Diterima</div>
+          <div class="value" id="totalReceived">Rp0</div>
+        </div>
+        <div class="card stat-card">
+          <i class="fas fa-flag-checkered icon"></i>
+          <div class="label">Sisa Target</div>
+          <div class="value" id="remainingTarget">Rp0</div>
+        </div>
+        <div class="card stat-card">
+          <i class="fas fa-store icon"></i>
+          <div class="label">Jumlah Toko</div>
+          <div class="value" id="storeCount">0</div>
+        </div>
+      </div>
+      <!-- Progress card -->
+      <div class="card" style="margin-bottom: 24px">
+        <div style="display: flex; justify-content: space-between">
+          <span>Progress</span><span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- FORM INPUT -->
+      <div class="card" style="margin-bottom: 24px">
+        <h4 style="margin-bottom: 12px">
+          <i class="fas fa-plus-circle text-primary"></i> Tambah Setoran
+        </h4>
+        <div class="form-grid">
+          <input type="text" id="storeName" placeholder="Nama Toko *" />
+          <input type="text" id="nominalInput" placeholder="Nominal Uang *" />
+          <input type="text" id="noteInput" placeholder="Catatan (opsional)" />
+          <div class="full" style="display: flex; gap: 12px; flex-wrap: wrap">
+            <button class="btn btn-primary" id="addBtn">
+              <i class="fas fa-save"></i> Tambah Setoran
+            </button>
+            <button class="btn btn-success" id="setTargetBtn">
+              <i class="fas fa-bullseye"></i> Simpan Target
+            </button>
+            <input
+              type="text"
+              id="targetInput"
+              placeholder="Target Hari Ini"
+              style="flex: 2; min-width: 140px"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER & EXPORT -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Cari Nama Toko" />
+        <select id="sortSelect">
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+          <option value="highest">Nominal terbesar</option>
+          <option value="lowest">Nominal terkecil</option>
+        </select>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button class="btn btn-primary" id="exportPdf">
+            <i class="fas fa-file-pdf"></i> PDF
+          </button>
+          <button class="btn btn-success" id="exportExcel">
+            <i class="fas fa-file-excel"></i> Excel
+          </button>
+          <button class="btn btn-warning" id="printBtn">
+            <i class="fas fa-print"></i> Print
+          </button>
+          <button
+            class="btn btn-info"
+            onclick="window.location.href = 'hitung.html'"
+          >
+            <i class="fas fa-calculator"></i> Hitung Total Uang
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card" style="padding: 6px 6px 12px 6px">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            padding: 0 12px;
+            flex-wrap: wrap;
+          "
+        >
+          <h5><i class="fas fa-table"></i> Data Setoran</h5>
+          <span id="totalSummary" style="font-weight: 600"></span>
+        </div>
+        <div class="table-responsive" id="tableWrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Toko</th>
+                <th>Nominal</th>
+                <th>Catatan</th>
+                <th>Jam</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div
+          id="emptyState"
+          style="text-align: center; padding: 30px 0; color: #94a3b8"
+        >
+          <i class="fas fa-inbox" style="font-size: 2.5rem"></i><br />Belum ada
+          data setoran
+        </div>
+      </div>
+
+      <!-- BOTTOM NAV (mobile) -->
+      <div class="bottom-nav">
+        <a href="#" id="navHome" class="active"><i class="fas fa-home"></i></a>
+        <a href="#" id="navAdd"><i class="fas fa-plus-circle"></i></a>
+        <a href="#" id="navChart"><i class="fas fa-chart-bar"></i></a>
+        <a href="#" id="navReset"><i class="fas fa-trash-alt"></i></a>
+      </div>
+
+      <!-- Floating add -->
+      <button class="float-add" id="floatAddBtn">
+        <i class="fas fa-plus"></i>
+      </button>
+      <!-- Scroll top -->
+      <button class="scroll-top" id="scrollTopBtn">
+        <i class="fas fa-chevron-up"></i>
+      </button>
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+      (function () {
+        // ===== STATE =====
+        let storeData = JSON.parse(localStorage.getItem("logistikData")) || [];
+        let target = parseInt(localStorage.getItem("logistikTarget")) || 0;
+        let editingIndex = -1;
+
+        // DOM refs
+        const $ = (id) => document.getElementById(id);
+        const storeName = $("storeName"),
+          nominalInput = $("nominalInput"),
+          noteInput = $("noteInput");
+        const addBtn = $("addBtn"),
+          setTargetBtn = $("setTargetBtn"),
+          targetInput = $("targetInput");
+        const tableBody = $("tableBody"),
+          emptyState = $("emptyState");
+        const targetDisplay = $("targetDisplay"),
+          totalReceived = $("totalReceived");
+        const remainingTarget = $("remainingTarget"),
+          storeCount = $("storeCount");
+        const progressFill = $("progressFill"),
+          progressPercent = $("progressPercent");
+        const searchInput = $("searchInput"),
+          sortSelect = $("sortSelect");
+        const totalSummary = $("totalSummary"),
+          toast = $("toast");
+
+        // ===== FORMAT RUPIAH =====
+        const formatRupiah = (num) => {
+          if (isNaN(num) || num < 0) num = 0;
+          return "Rp" + Math.round(num).toLocaleString("id-ID");
+        };
+        const parseRupiah = (str) => {
+          if (!str) return 0;
+          const clean = str.replace(/[^0-9]/g, "");
+          return parseInt(clean) || 0;
+        };
+
+        // ===== TOAST =====
+        let toastTimer;
+        function showToast(msg, isError = false) {
+          toast.textContent = msg;
+          toast.style.background = isError ? "#EF4444" : "#1E293B";
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+        }
+
+        // ===== SAVE & RENDER =====
+        function saveData() {
+          localStorage.setItem("logistikData", JSON.stringify(storeData));
+          localStorage.setItem("logistikTarget", String(target));
+          renderAll();
+        }
+
+        function renderAll() {
+          // Target
+          targetDisplay.textContent = formatRupiah(target);
+          // Filter & sort
+          const search = searchInput.value.toLowerCase().trim();
+          let filtered = storeData.filter((d) =>
+            d.store.toLowerCase().includes(search),
+          );
+          const sort = sortSelect.value;
+          if (sort === "highest") filtered.sort((a, b) => b.amount - a.amount);
+          else if (sort === "lowest")
+            filtered.sort((a, b) => a.amount - b.amount);
+          else if (sort === "oldest")
+            filtered.sort((a, b) => a.timestamp - b.timestamp);
+          else filtered.sort((a, b) => b.timestamp - a.timestamp); // newest
+
+          // Table
+          if (filtered.length === 0) {
+            tableBody.innerHTML = "";
+            emptyState.style.display = "block";
+          } else {
+            emptyState.style.display = "none";
+            tableBody.innerHTML = filtered
+              .map((d, idx) => {
+                const realIdx = storeData.indexOf(d);
+                return `<tr class="fade-in">
+              <td>${idx + 1}</td>
+              <td>${d.store}</td>
+              <td>${formatRupiah(d.amount)}</td>
+              <td>${d.note || "-"}</td>
+              <td>${new Date(d.timestamp).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</td>
+              <td class="actions">
+                <i class="fas fa-edit text-primary" data-idx="${realIdx}"></i>
+                <i class="fas fa-trash-alt text-danger" data-idx="${realIdx}"></i>
+              </td>
+            </tr>`;
+              })
+              .join("");
+          }
+
+          // Total
+          const total = storeData.reduce((sum, d) => sum + d.amount, 0);
+          totalReceived.textContent = formatRupiah(total);
+          const sisa = Math.max(0, target - total);
+          remainingTarget.textContent = formatRupiah(sisa);
+          storeCount.textContent = storeData.length;
+          const percent =
+            target > 0 ? Math.min(100, (total / target) * 100) : 0;
+          progressFill.style.width = percent + "%";
+          progressFill.className =
+            "progress-fill" + (percent >= 100 ? " green" : "");
+          progressPercent.textContent = Math.round(percent) + "%";
+
+          // Summary
+          if (target > 0) {
+            const diff = total - target;
+            if (diff > 0)
+              totalSummary.innerHTML = `<span class="text-success">Kelebihan ${formatRupiah(diff)}</span>`;
+            else if (diff < 0)
+              totalSummary.innerHTML = `<span class="text-danger">Sisa Target ${formatRupiah(-diff)}</span>`;
+            else
+              totalSummary.innerHTML = `<span class="text-success">Target Tercapai! 🎉</span>`;
+          } else {
+            totalSummary.textContent = `Total ${formatRupiah(total)}`;
+          }
+          // Confetti if target reached
+          if (target > 0 && total >= target && !window._confettiFired) {
+            window._confettiFired = true;
+            if (typeof confetti === "function") confetti();
+          }
+          if (total < target) window._confettiFired = false;
+        }
+
+        // ===== CRUD =====
+        function addSetoran(store, amount, note) {
+          if (!store.trim()) {
+            showToast("Nama toko wajib diisi", true);
+            return false;
+          }
+          if (amount <= 0) {
+            showToast("Nominal harus lebih dari 0", true);
+            return false;
+          }
+          storeData.push({
+            store: store.trim(),
+            amount,
+            note: note.trim(),
+            timestamp: Date.now(),
+          });
+          saveData();
+          showToast("Setoran berhasil ditambahkan!");
+          return true;
+        }
+
+        function deleteSetoran(idx) {
+          if (confirm("Hapus data ini?")) {
+            storeData.splice(idx, 1);
+            saveData();
+            showToast("Data dihapus");
+          }
+        }
+
+        function editSetoran(idx) {
+          const d = storeData[idx];
+          storeName.value = d.store;
+          nominalInput.value = formatRupiah(d.amount);
+          noteInput.value = d.note || "";
+          editingIndex = idx;
+          addBtn.innerHTML = '<i class="fas fa-edit"></i> Update Setoran';
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // ===== EVENTS =====
+        addBtn.addEventListener("click", function () {
+          const store = storeName.value.trim();
+          const amount = parseRupiah(nominalInput.value);
+          const note = noteInput.value;
+          if (editingIndex >= 0) {
+            if (!store) {
+              showToast("Nama toko wajib", true);
+              return;
+            }
+            if (amount <= 0) {
+              showToast("Nominal > 0", true);
+              return;
+            }
+            storeData[editingIndex] = {
+              store,
+              amount,
+              note: note.trim(),
+              timestamp: storeData[editingIndex].timestamp,
+            };
+            editingIndex = -1;
+            addBtn.innerHTML = '<i class="fas fa-save"></i> Tambah Setoran';
+            saveData();
+            showToast("Data diupdate");
+            storeName.value = "";
+            nominalInput.value = "";
+            noteInput.value = "";
+          } else {
+            if (addSetoran(store, amount, note)) {
+              storeName.value = "";
+              nominalInput.value = "";
+              noteInput.value = "";
+            }
+          }
+        });
+
+        setTargetBtn.addEventListener("click", function () {
+          const val = parseRupiah(targetInput.value);
+          if (val > 0) {
+            target = val;
+            saveData();
+            showToast("Target disimpan");
+            targetInput.value = "";
+            window._confettiFired = false;
+          } else {
+            showToast("Masukkan target yang valid", true);
+          }
+        });
+
+        // Table actions (delegation)
+        tableBody.addEventListener("click", function (e) {
+          const target = e.target.closest("i");
+          if (!target) return;
+          const idx = target.dataset.idx;
+          if (idx === undefined) return;
+          if (target.classList.contains("fa-trash-alt"))
+            deleteSetoran(parseInt(idx));
+          if (target.classList.contains("fa-edit")) editSetoran(parseInt(idx));
+        });
+
+        // Nominal input formatting
+        nominalInput.addEventListener("input", function () {
+          let val = this.value.replace(/[^0-9]/g, "");
+          if (val) this.value = formatRupiah(parseInt(val));
+          else this.value = "";
+        });
+        targetInput.addEventListener("input", function () {
+          let val = this.value.replace(/[^0-9]/g, "");
+          if (val) this.value = formatRupiah(parseInt(val));
+          else this.value = "";
+        });
+
+        // Filter & sort
+        searchInput.addEventListener("input", renderAll);
+        sortSelect.addEventListener("change", renderAll);
+
+        // Theme
+        let dark = localStorage.getItem("logistikDark") === "true";
+        const themeToggle = $("themeToggle");
+        function applyTheme() {
+          document.body.classList.toggle("dark", dark);
+          themeToggle.innerHTML = dark
+            ? '<i class="fas fa-sun"></i>'
+            : '<i class="fas fa-moon"></i>';
+          localStorage.setItem("logistikDark", String(dark));
+        }
+        themeToggle.addEventListener("click", function () {
+          dark = !dark;
+          applyTheme();
+        });
+        applyTheme();
+
+        // Clock & date
+        function updateClock() {
+          const now = new Date();
+          $("dateDisplay").innerHTML =
+            `<i class="far fa-calendar-alt"></i> ${now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`;
+          $("clockDisplay").innerHTML =
+            `<i class="far fa-clock"></i> ${now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Export placeholder
+        $("exportPdf").addEventListener("click", function () {
+          showToast("Export PDF (simulasi)");
+        });
+        $("exportExcel").addEventListener("click", function () {
+          showToast("Export Excel (simulasi)");
+        });
+        $("printBtn").addEventListener("click", function () {
+          window.print();
+        });
+
+        // Scroll top
+        $("scrollTopBtn").addEventListener("click", function () {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        // Float add
+        $("floatAddBtn").addEventListener("click", function () {
+          document
+            .querySelector(".card h4")
+            ?.scrollIntoView({ behavior: "smooth" });
+        });
+
+        // Bottom nav
+        $("navAdd").addEventListener("click", function (e) {
+          e.preventDefault();
+          document
+            .querySelector(".card h4")
+            ?.scrollIntoView({ behavior: "smooth" });
+        });
+        $("navHome").addEventListener("click", function (e) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        $("navChart").addEventListener("click", function (e) {
+          e.preventDefault();
+          showToast("Statistik (Chart.js) siap");
+        });
+        $("navReset").addEventListener("click", function (e) {
+          e.preventDefault();
+          if (confirm("Reset semua data? (target & setoran)")) {
+            storeData = [];
+            target = 0;
+            editingIndex = -1;
+            saveData();
+            showToast("Data direset");
+            window._confettiFired = false;
+          }
+        });
+
+        // ===== INIT =====
+        renderAll();
+        // Restore target input placeholder
+        targetInput.placeholder = "Target hari ini";
+        // Show toast on load
+        setTimeout(() => showToast("Selamat datang! 🚀"), 400);
+
+        // Confetti simple (bonus)
+        window.confetti = function () {
+          const colors = [
+            "#2563EB",
+            "#22C55E",
+            "#F59E0B",
+            "#EF4444",
+            "#8B5CF6",
+          ];
+          for (let i = 0; i < 80; i++) {
+            const el = document.createElement("div");
+            el.style.cssText = `position:fixed; left:${Math.random() * 100}vw; top:-10px; width:8px; height:8px; background:${colors[Math.floor(Math.random() * colors.length)]}; border-radius:50%; pointer-events:none; z-index:9999; transition: transform 0.8s ease, opacity 0.8s;`;
+            document.body.appendChild(el);
+            setTimeout(() => {
+              el.style.transform = `translateY(${window.innerHeight + 20}px) translateX(${(Math.random() - 0.5) * 100}px) rotate(${Math.random() * 360}deg)`;
+              el.style.opacity = "0";
+            }, 20);
+            setTimeout(() => el.remove(), 1000);
+          }
+        };
+        // if target already reached on load
+        const total = storeData.reduce((s, d) => s + d.amount, 0);
+        if (target > 0 && total >= target) {
+          setTimeout(() => {
+            if (typeof confetti === "function") confetti();
+          }, 600);
+        }
+      })();
+    </script>
+    <!-- service worker & manifest (PWA) -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+    </script>
+  </body>
+</html>
